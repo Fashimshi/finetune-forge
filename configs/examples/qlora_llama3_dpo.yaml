@@ -1,0 +1,44 @@
+# Example: QLoRA DPO on Llama-3.1-8B-Instruct — fits in ~8GB VRAM (4-bit).
+model_name_or_path: meta-llama/Llama-3.1-8B-Instruct
+stage: dpo
+do_train: true
+finetuning_type: lora
+lora_rank: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target: q_proj,v_proj,k_proj,o_proj,gate_proj,up_proj,down_proj
+
+quantization_bit: 4
+quantization_method: bitsandbytes
+
+dataset: custom_dataset
+dataset_dir: ./output
+template: llama3
+cutoff_len: 2048
+max_samples: 100000
+overwrite_cache: true
+preprocessing_num_workers: 4
+
+pref_beta: 0.1
+pref_loss: sigmoid
+
+output_dir: ./output
+logging_steps: 10
+save_steps: 500
+plot_loss: true
+overwrite_output_dir: true
+
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 0.0001
+num_train_epochs: 3
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+fp16: false
+bf16: true
+ddp_timeout: 180000000
+
+val_size: 0.1
+per_device_eval_batch_size: 1
+eval_strategy: steps
+eval_steps: 500

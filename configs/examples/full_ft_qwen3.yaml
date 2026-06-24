@@ -1,0 +1,34 @@
+# Example: Full fine-tune on Qwen3-7B — needs ~40GB+ VRAM.
+model_name_or_path: Qwen/Qwen3-7B
+stage: sft
+do_train: true
+finetuning_type: full
+
+dataset: custom_dataset
+dataset_dir: ./output
+template: qwen3
+cutoff_len: 2048
+max_samples: 100000
+overwrite_cache: true
+preprocessing_num_workers: 4
+
+output_dir: ./output
+logging_steps: 10
+save_steps: 500
+plot_loss: true
+overwrite_output_dir: true
+
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 16
+learning_rate: 0.00005
+num_train_epochs: 3
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+fp16: false
+bf16: true
+ddp_timeout: 180000000
+
+val_size: 0.1
+per_device_eval_batch_size: 1
+eval_strategy: steps
+eval_steps: 500

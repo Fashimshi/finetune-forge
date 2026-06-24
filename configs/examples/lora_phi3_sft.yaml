@@ -1,0 +1,38 @@
+# Example: LoRA SFT on Phi-3.5-mini (3.8B) — fits in ~6GB VRAM.
+model_name_or_path: microsoft/Phi-3.5-mini-instruct
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_rank: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target: q_proj,v_proj,k_proj,o_proj
+
+dataset: custom_dataset
+dataset_dir: ./output
+template: phi3
+cutoff_len: 2048
+max_samples: 100000
+overwrite_cache: true
+preprocessing_num_workers: 4
+
+output_dir: ./output
+logging_steps: 10
+save_steps: 500
+plot_loss: true
+overwrite_output_dir: true
+
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 4
+learning_rate: 0.0002
+num_train_epochs: 3
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+fp16: false
+bf16: true
+ddp_timeout: 180000000
+
+val_size: 0.1
+per_device_eval_batch_size: 1
+eval_strategy: steps
+eval_steps: 500

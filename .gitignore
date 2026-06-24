@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+build/
+dist/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+
+# Project artifacts
+output/
+mlruns/
+LlamaFactory/
+*.log
+processed_dataset.json
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# Test / cache
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Notebooks
+.ipynb_checkpoints/
