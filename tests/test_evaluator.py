@@ -1,7 +1,6 @@
 # tests/test_evaluator.py
 
 import json
-from pathlib import Path
 
 import finetune_forge.agents.evaluator as eval_mod
 from finetune_forge.agents.evaluator import run_evaluator, _load_sample_outputs
@@ -38,6 +37,18 @@ def test_run_evaluator_scores(monkeypatch, base_state, tmp_path):
     er = out["evaluation_result"]
     assert er.judge_score == 0.8
     assert er.passed is True
+
+
+def test_run_evaluator_zero_score_is_not_passed(monkeypatch, base_state, tmp_path):
+    base_state["checkpoint_path"] = str(tmp_path)
+    base_state["dataset_info"] = _make_dataset_info(tmp_path)
+    monkeypatch.setattr(eval_mod, "call_llm", lambda **kwargs: {"score": 0.0, "reasoning": "bad"})
+
+    out = run_evaluator(base_state)
+    er = out["evaluation_result"]
+    # A real 0.0 score must be preserved (not coerced to a default) and fail the gate.
+    assert er.judge_score == 0.0
+    assert er.passed is False
 
 
 def test_run_evaluator_no_checkpoint(base_state):

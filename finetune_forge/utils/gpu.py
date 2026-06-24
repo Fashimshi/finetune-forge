@@ -38,7 +38,7 @@ def get_gpu_count() -> int:
             text=True,
             check=True,
         )
-        return len([l for l in result.stdout.strip().split("\n") if l.strip()])
+        return len([line for line in result.stdout.strip().split("\n") if line.strip()])
     except Exception:
         return 0
 

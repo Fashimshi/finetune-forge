@@ -21,6 +21,10 @@ def run_publisher(state: PipelineState) -> PipelineState:
         state["error"] = f"Publisher: checkpoint not found at {checkpoint_path}"
         return state
 
+    if state.get("model_config") is None:
+        state["error"] = "Publisher: no model_config in state"
+        return state
+
     if not hub_repo:
         logger.warning("Publisher: no output_hub_repo specified, skipping upload")
         return state
@@ -58,7 +62,11 @@ def _push_model_card(api: HfApi, state: PipelineState, hub_repo: str) -> None:
     """Generates and pushes a minimal model card README."""
     model_config = state["model_config"]
     eval_result = state.get("evaluation_result")
-    judge_score = f"{eval_result.judge_score:.2f}" if eval_result and eval_result.judge_score else "N/A"
+    judge_score = (
+        f"{eval_result.judge_score:.2f}"
+        if eval_result and eval_result.judge_score is not None
+        else "N/A"
+    )
 
     card_content = f"""---
 base_model: {model_config.model_name}

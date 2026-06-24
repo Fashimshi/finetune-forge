@@ -7,10 +7,10 @@ format and CLI, so the agents (configurator/executor) stay backend-agnostic.
 
 from __future__ import annotations
 
+import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
@@ -53,6 +53,51 @@ def get_template(model_name: str) -> str:
     return "default"
 
 
+def write_dataset_info(
+    dataset_path: str,
+    stage: str,
+    dataset_name: str = "custom_dataset",
+) -> str:
+    """Register the processed dataset in LlamaFactory's ``dataset_info.json``.
+
+    LlamaFactory resolves a dataset by looking up ``dataset_name`` in
+    ``<dataset_dir>/dataset_info.json``; without this entry training aborts with
+    a "dataset not found" error. Returns the path to the written file.
+    """
+    data_path = Path(dataset_path)
+    dataset_dir = data_path.parent
+
+    if stage == "dpo":
+        # Paired-preference (ranking) format produced by the data processor.
+        entry = {
+            "file_name": data_path.name,
+            "ranking": True,
+            "columns": {
+                "prompt": "instruction",
+                "chosen": "chosen",
+                "rejected": "rejected",
+            },
+        }
+    elif stage == "pretrain" or stage == "pt":
+        entry = {"file_name": data_path.name, "columns": {"prompt": "text"}}
+    else:  # sft / rm default to the alpaca-style mapping.
+        entry = {
+            "file_name": data_path.name,
+            "columns": {"prompt": "instruction", "query": "input", "response": "output"},
+        }
+
+    info_path = dataset_dir / "dataset_info.json"
+    existing: dict = {}
+    if info_path.exists():
+        try:
+            existing = json.loads(info_path.read_text())
+        except json.JSONDecodeError:
+            logger.warning("Existing dataset_info.json is invalid; overwriting.")
+    existing[dataset_name] = entry
+    info_path.write_text(json.dumps(existing, indent=2, ensure_ascii=False))
+    return str(info_path)
+
+
 def build_llamafactory_yaml(
     model_config: ModelConfig,
     training_config: TrainingConfig,
@@ -61,10 +106,16 @@ def build_llamafactory_yaml(
 ) -> str:
     """Build a LlamaFactory-compatible train-args YAML file and return its path.
 
+    Also writes the companion ``dataset_info.json`` so LlamaFactory can resolve
+    the processed dataset.
+
     Reference: https://github.com/hiyouga/LlamaFactory/blob/main/examples/
     """
     method = model_config.training_method
     stage = _STAGE_MAP.get(method, "sft")
+
+    # Register the dataset so LlamaFactory can find it at train time.
+    write_dataset_info(dataset_path, stage, dataset_name)
 
     config: dict = {
         "model_name_or_path": model_config.model_name,

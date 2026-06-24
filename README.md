@@ -1,5 +1,10 @@
 # FineTuneForge — AI Agent for Automated LLM Fine-Tuning
 
+[![CI](https://github.com/Fashimshi/finetune-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/Fashimshi/finetune-forge/actions/workflows/ci.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-29%20passing-brightgreen.svg)](tests/)
+
 A multi-agent orchestration system that autonomously plans, configures, executes, and
 evaluates LLM fine-tuning jobs across model sizes — from Phi-3.5 Mini (3.8B) to
 LLaMA 3.1 (70B+). Built on **LlamaFactory** as the training backend, with **LangGraph**
@@ -116,9 +121,9 @@ Phase 1 (this repo) is the end-to-end agent pipeline. Planned Phase 2 work:
 
 ### Known limitations
 
-- The Executor requires a local LlamaFactory checkout and a registered
-  `dataset_info.json` entry mapping `custom_dataset` to the processed file — LlamaFactory's
-  dataset-registration step is not yet automated.
+- The Executor requires a local LlamaFactory checkout (`LLAMAFACTORY_DIR`). The
+  Configurator automatically writes the companion `dataset_info.json` registering the
+  processed dataset, so no manual registration is needed.
 - The judge currently scores training-set outputs as a proxy; it does not yet run
   inference against the freshly trained checkpoint.
 

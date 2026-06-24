@@ -5,7 +5,6 @@ import finetune_forge.agents.planner as planner_mod
 import finetune_forge.agents.configurator as cfg_mod
 import finetune_forge.agents.evaluator as eval_mod
 import finetune_forge.agents.executor as exec_mod
-import finetune_forge.agents.publisher as pub_mod
 from finetune_forge.graph.pipeline import run_pipeline
 
 

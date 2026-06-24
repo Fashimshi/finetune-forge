@@ -4,9 +4,15 @@ from pathlib import Path
 
 import yaml
 
+import json
+
 import finetune_forge.agents.configurator as cfg_mod
 from finetune_forge.agents.configurator import run_configurator
-from finetune_forge.backends.llamafactory import build_llamafactory_yaml, get_template
+from finetune_forge.backends.llamafactory import (
+    build_llamafactory_yaml,
+    get_template,
+    write_dataset_info,
+)
 from finetune_forge.schemas.state import ModelConfig, TrainingConfig, DatasetInfo
 
 
@@ -49,6 +55,35 @@ def test_build_yaml_qlora_adds_quantization(tmp_path):
     config = yaml.safe_load(Path(path).read_text())
     assert config["quantization_bit"] == 4
     assert config["quantization_method"] == "bitsandbytes"
+
+
+def test_build_yaml_registers_dataset_info(tmp_path):
+    mc = ModelConfig(
+        model_name="microsoft/Phi-3.5-mini-instruct",
+        model_size_b=3.8,
+        training_method="lora",
+        target_modules=["q_proj"],
+    )
+    tc = TrainingConfig(output_dir=str(tmp_path / "out"))
+    data_file = tmp_path / "processed_dataset.json"
+    data_file.write_text("[]")
+
+    build_llamafactory_yaml(mc, tc, dataset_path=str(data_file))
+
+    # LlamaFactory needs dataset_info.json next to the dataset file.
+    info = json.loads((tmp_path / "dataset_info.json").read_text())
+    assert "custom_dataset" in info
+    assert info["custom_dataset"]["file_name"] == "processed_dataset.json"
+    assert info["custom_dataset"]["columns"]["response"] == "output"
+
+
+def test_write_dataset_info_dpo_is_ranking(tmp_path):
+    data_file = tmp_path / "processed_dataset.json"
+    data_file.write_text("[]")
+    write_dataset_info(str(data_file), stage="dpo")
+    info = json.loads((tmp_path / "dataset_info.json").read_text())
+    assert info["custom_dataset"]["ranking"] is True
+    assert info["custom_dataset"]["columns"]["rejected"] == "rejected"
 
 
 def test_run_configurator(monkeypatch, base_state, tmp_path):

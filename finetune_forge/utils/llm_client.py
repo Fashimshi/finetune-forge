@@ -19,14 +19,15 @@ def get_client() -> Anthropic:
 
 
 def _strip_json_fence(content: str) -> str:
-    """Remove a leading ```json / ``` markdown fence if the model wrapped output."""
+    """Remove a ```json / ``` markdown fence if the model wrapped its output."""
     clean = content.strip()
     if clean.startswith("```"):
-        # Take the content between the first pair of fences.
         parts = clean.split("```")
-        clean = parts[1] if len(parts) >= 2 else clean
-        if clean.startswith("json"):
-            clean = clean[4:]
+        # parts[1] is the fenced body; fall back to the original if malformed.
+        if len(parts) >= 2:
+            clean = parts[1].strip()
+            if clean.startswith("json"):
+                clean = clean[len("json"):].strip()
     return clean.strip()
 
 
