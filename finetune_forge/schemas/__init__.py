@@ -6,6 +6,7 @@ from finetune_forge.schemas.state import (
     TrainingConfig,
     DatasetInfo,
     EvaluationResult,
+    HPOResult,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "TrainingConfig",
     "DatasetInfo",
     "EvaluationResult",
+    "HPOResult",
 ]

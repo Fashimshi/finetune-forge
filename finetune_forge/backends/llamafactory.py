@@ -103,11 +103,18 @@ def build_llamafactory_yaml(
     training_config: TrainingConfig,
     dataset_path: str,
     dataset_name: str = "custom_dataset",
+    extra_overrides: dict | None = None,
+    yaml_name: str = "train_config.yaml",
 ) -> str:
     """Build a LlamaFactory-compatible train-args YAML file and return its path.
 
     Also writes the companion ``dataset_info.json`` so LlamaFactory can resolve
     the processed dataset.
+
+    ``extra_overrides`` are merged into the generated config last (used by the HPO
+    agent to inject ``max_steps`` and per-trial hyperparameters); ``yaml_name``
+    lets callers write to a distinct file so trial configs don't clobber the main
+    ``train_config.yaml``.
 
     Reference: https://github.com/hiyouga/LlamaFactory/blob/main/examples/
     """
@@ -171,7 +178,10 @@ def build_llamafactory_yaml(
             "quantization_method": "bitsandbytes",
         })
 
-    yaml_path = Path(training_config.output_dir) / "train_config.yaml"
+    if extra_overrides:
+        config.update(extra_overrides)
+
+    yaml_path = Path(training_config.output_dir) / yaml_name
     yaml_path.parent.mkdir(parents=True, exist_ok=True)
     yaml_path.write_text(yaml.dump(config, default_flow_style=False, allow_unicode=True))
     return str(yaml_path)

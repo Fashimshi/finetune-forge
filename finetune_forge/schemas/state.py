@@ -45,6 +45,15 @@ class DatasetInfo(BaseModel):
     issues: list[str] = Field(default_factory=list)
 
 
+class HPOResult(BaseModel):
+    """Outcome of an Optuna hyperparameter search."""
+    best_params: dict = Field(default_factory=dict)
+    best_value: Optional[float] = None        # objective (eval loss); lower is better
+    num_trials: int = 0
+    direction: str = "minimize"
+    trials: list[dict] = Field(default_factory=list)  # [{params, value}] per completed trial
+
+
 class EvaluationResult(BaseModel):
     perplexity: Optional[float] = None
     rouge_l: Optional[float] = None
@@ -70,10 +79,16 @@ class PipelineState(TypedDict):
     # Computed by DataProcessor
     dataset_info: Optional[DatasetInfo]
 
+    # Computed by HPO agent (optional, only when hpo_trials > 0)
+    hpo_trials: int
+    hpo_result: Optional[HPOResult]
+
     # Computed by Executor
     training_complete: bool
     checkpoint_path: Optional[str]
     training_logs: Optional[str]
+    training_metrics: Optional[dict]   # summary of loss/eval-loss curves
+    mlflow_run_id: Optional[str]
 
     # Computed by Evaluator
     evaluation_result: Optional[EvaluationResult]

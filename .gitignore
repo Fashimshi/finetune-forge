@@ -18,6 +18,9 @@ env/
 # Project artifacts
 output/
 mlruns/
+mlflow.db
+.finetune_forge/
+*.sqlite
 LlamaFactory/
 *.log
 processed_dataset.json

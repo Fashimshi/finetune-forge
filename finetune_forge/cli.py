@@ -18,16 +18,25 @@ def run(
     task: str = typer.Option(..., "--task", "-t", help="Task description in plain English"),
     dataset: str = typer.Option(..., "--dataset", "-d", help="Path to dataset file or HF dataset ID"),
     hub_repo: str = typer.Option("", "--hub-repo", "-r", help="HuggingFace Hub repo ID (user/repo)"),
+    hpo_trials: int = typer.Option(0, "--hpo-trials", help="Run N Optuna hyperparameter-search trials before training"),
+    thread_id: str = typer.Option("", "--thread-id", help="Checkpoint id so the run can be resumed if interrupted"),
+    resume: bool = typer.Option(False, "--resume", help="Resume an interrupted run identified by --thread-id"),
 ):
     """
-    Run the full FineTuneForge pipeline: plan → preprocess → configure → train → evaluate → push.
+    Run the full FineTuneForge pipeline: plan → preprocess → configure → hpo → train → evaluate → push.
     """
-    console.print("[bold green]FineTuneForge[/bold green] Starting pipeline...\n")
+    if resume:
+        console.print(f"[bold green]FineTuneForge[/bold green] Resuming thread '{thread_id or 'default'}'...\n")
+    else:
+        console.print("[bold green]FineTuneForge[/bold green] Starting pipeline...\n")
 
     final_state = run_pipeline(
         task_description=task,
         dataset_path=dataset,
         output_hub_repo=hub_repo,
+        hpo_trials=hpo_trials,
+        thread_id=thread_id or None,
+        resume=resume,
     )
 
     if final_state.get("error"):
@@ -42,6 +51,8 @@ def run(
     mc = final_state.get("model_config")
     di = final_state.get("dataset_info")
     er = final_state.get("evaluation_result")
+    hpo = final_state.get("hpo_result")
+    tm = final_state.get("training_metrics")
 
     if mc:
         table.add_row("Model", f"{mc.model_name} ({mc.model_size_b}B)")
@@ -50,6 +61,15 @@ def run(
 
     if di:
         table.add_row("Dataset", f"{di.num_examples} examples, quality={di.quality_score:.2f}")
+
+    if hpo and hpo.best_params:
+        table.add_row("HPO Best", f"{hpo.best_params} (loss={hpo.best_value:.4f})")
+
+    if tm and tm.get("final_loss") is not None:
+        table.add_row("Final Loss", f"{tm['final_loss']:.4f}")
+
+    if final_state.get("mlflow_run_id"):
+        table.add_row("MLflow Run", final_state["mlflow_run_id"])
 
     if er:
         table.add_row("Judge Score", f"{er.judge_score:.2f}/1.0" if er.judge_score else "N/A")
